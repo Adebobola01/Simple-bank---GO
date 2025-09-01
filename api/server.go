@@ -9,3 +9,12 @@ type Server struct {
 	store  *sqlc.Store
 	router *gin.Engine
 }
+
+func NewServer(store *db.Store) *server {
+	server := &Server{store: store}
+	router: gin.default()
+
+	router.POST("/accounts", server.createAccout)
+	server.router = router
+	return server
+}
