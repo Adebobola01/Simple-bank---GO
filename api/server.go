@@ -1,24 +1,28 @@
 package api
 
 import (
+	db "github.com/Adebobola01/Simple-bank---GO/db/sqlc"
 	"github.com/gin-gonic/gin"
-	"https://github.com/Adebobola01/Simple-bank---GO/tree/master/db/sqlc"
 )
 
 type Server struct {
-	store  *sqlc.Store
+	store  *db.Store
 	router *gin.Engine
 }
 
-func NewServer(store *db.Store) *server {
+func NewServer(store *db.Store) *Server {
 	server := &Server{store: store}
-	router: gin.default()
+	router := gin.Default()
 
-	router.POST("/accounts", server.createAccout)
+	router.POST("/accounts", server.createAccount)
 	server.router = router
 	return server
 }
 
 func errorResponse (err error) gin.H{
 	return gin.H{"error": err.Error};
+}
+
+func (server *Server) Start(address string) error{
+	return server.router.Run(address)
 }

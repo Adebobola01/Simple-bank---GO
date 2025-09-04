@@ -1,32 +1,36 @@
 package api
 
 import (
-	"github.com/gin-gonic/gin"
+	"fmt"
 	"net/http"
+
+	db "github.com/Adebobola01/Simple-bank---GO/db/sqlc"
+	"github.com/gin-gonic/gin"
 )
 
 type createAccountRequest struct{
-	owner string `json:"owner" binding:"required`
-	currency string `json:"currency" binding: "required oneof= EUR USD"`
+	Owner string `json:"owner" binding:"required"`
+	Currency string `json:"currency" binding:"required,oneof=EUR USD"`
 }
 
 func (server *Server) createAccount(ctx *gin.Context){
 	var req createAccountRequest
-	err := ctx.ShouldBindJSON(&req); err != nil{
+	if err := ctx.ShouldBindJSON(&req); err != nil {
 		ctx.JSON(http.StatusBadRequest, errorResponse(err))
 		return
 	}
 
-	args := createAccountParams{
-		Owner: req.owner
-		Currency: req.currency
-		Balance: 0
+	args := db.CreateAccountParams{
+		Owner: req.Owner,
+		Currency: req.Currency,
+		Balance: 0,
 	}
-	account, err := Server.store.CreatAccount(ctx, args)
-	if err := nil {
+	fmt.Println(args, req)
+	account, err := server.store.CreateAccount(ctx, args)
+	if err != nil {
 		ctx.JSON(http.StatusInternalServerError, errorResponse(err))
 		return
 	}
-	ctx.JSON(http.statusOK, account)
+	ctx.JSON(http.StatusOK, account)
 
 }
