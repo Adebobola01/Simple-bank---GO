@@ -2,6 +2,7 @@ package api
 
 import (
 	sql "database/sql"
+	"fmt"
 	"net/http"
 
 	db "github.com/Adebobola01/Simple-bank---GO/db/sqlc"
@@ -51,6 +52,33 @@ func (server *Server) getAccount(ctx *gin.Context){
 			ctx.JSON(http.StatusNotFound, errorResponse(err))
 			return
 		}
+		ctx.JSON(http.StatusInternalServerError, errorResponse(err))
+		return
+	}
+	ctx.JSON(http.StatusOK, account)
+}
+
+type listAccountsRequest struct{
+	PageID int32 `form:"page_id" binding:"required"`
+	PageSize int32 `form:"page_size" binding:"required"`
+}
+
+
+// args := db.
+
+func (server *Server) listAccount(ctx *gin.Context){
+	var req listAccountsRequest
+	if err := ctx.ShouldBindQuery(&req); err != nil{
+		ctx.JSON(http.StatusInternalServerError, errorResponse(err))
+		return
+	}
+	fmt.Println(req)
+	args := db.ListAccountsParams{
+		Limit: req.PageSize,
+		Offset: (req.PageID - 1) * req.PageSize,
+	}
+	account, err := server.store.ListAccounts(ctx, args)
+	if(err != nil){
 		ctx.JSON(http.StatusInternalServerError, errorResponse(err))
 		return
 	}
