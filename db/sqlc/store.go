@@ -68,6 +68,18 @@ func (store *Store) TransferTx(ctx context.Context, args TransferTxParams) (Tran
 			return err
 		}
 
+		//handle balance change
+		err = transferBalanceChangeHandler(ctx, q, args.FromAccountID, args.ToAccountID, args.Amount)
+		if err != nil{
+			//delete transfer then return
+			errorResponse := q.DeleteTransfer(ctx, result.ID)
+			if errorResponse != nil{
+				return errorResponse
+			}
+			return err
+		}
+
+
 		_, FromEntryErr := q.CreateEntry(ctx, CreateEntryParams{
 			AccountID: args.FromAccountID,
 			Amount: -args.Amount,
@@ -87,4 +99,45 @@ func (store *Store) TransferTx(ctx context.Context, args TransferTxParams) (Tran
 		return nil;
 	})
 	return result, err
+}
+
+
+func transferBalanceChangeHandler(ctx context.Context, q *Queries, fromAccountId int64, toAccounId int64, amount int64) error {
+
+	//update sender account
+	acc1, err := q.GetAccount(ctx, fromAccountId)
+	if err != nil{
+		return err
+	}
+
+	if acc1.Balance < amount {
+		return fmt.Errorf("Error: Balance Insufficient")
+	}
+
+	fromAccArgs := UpdateAccountParams{
+		ID: acc1.ID,
+		Balance: acc1.Balance - amount,
+	}
+	err = q.UpdateAccount(ctx, fromAccArgs)
+	if err != nil{
+		return err
+	}
+
+	//handler recipient balance change
+	acc2, err := q.GetAccount(ctx, toAccounId)
+	if err != nil{
+		return err
+	}
+	
+	toAccountArgs := UpdateAccountParams{
+		ID: acc2.ID,
+		Balance: acc2.Balance + amount,
+	}
+
+	err = q.UpdateAccount(ctx, toAccountArgs)
+
+	if err != nil{
+		return err
+	}
+	return err
 }
